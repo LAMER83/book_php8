@@ -1,4 +1,6 @@
  <?php
+//INSERT INTO products (id, type, firstname, mainname, title, price, numpages, playlength, discount)
+ //VALUES(1, "book", "Михайл", "Булгаков", "Мастер и Маргарита", 5, 666, 0, 1);
  class ShopProductWriter
  {
      private $products = [];
@@ -21,21 +23,65 @@
 
 class ShopProduct
 {
-    /*public $title;
-    public $producerMainName;
-    public $producerFirstName;
-    protected $price;*/
+
     private int | float $discont = 0;
+    private int $id = 0;
+
+    public function setID(int $id): void
+    {
+        $this->id - $id;
+    }
+
+    public static function getInstance(int $id, \PDO $pdo): ShopProduct
+    {
+        $stmt = $pdo->prepare("select * from products where id=?");
+        $result = $stmt->execute([$id]);
+        $row = $stmt->fetch();
+        if (empty($row))
+        {
+           return print "Ничего";
+        }
+
+        if ($row['type'] == "book")
+        {
+            $product = new BookProduct(
+                $row['title'],
+                $row['firstname'],
+                $row['mainname'],
+                (float) $row['price'],
+                (int) $row['numpages']
+            );
+            echo "DD";
+        }
+        elseif ($row['type'] == "cd")
+        {
+                $product = new CDProduct(
+                $row['title'],
+                $row['firstname'],
+                $row['mainname'],
+                (float) $row['price'],
+                (int) $row['playlength']
+            );
+        }
+        else
+        {
+            $firstname = (is_null($row['firstname'])) ? "" : $row['firstname'];
+            $product = new ShopProduct($row['title'],
+                                        $firstname,
+                                        $row['mainname'],
+                                        (float) $row['price']);
+        }
+        $product->setID((int) $row['id']);
+        $product->setDiscount((int) $row['discount']);
+        return $product;
+    }
 
     public function __construct(private string $title,
                                 private string $producerFirstName,
                                 private string $producerMainName,
                                 protected int | float $price)
     {
-       /* $this->title = $title;
-        $this->producerFirstName = $producerFirstName;
-        $this->producerMainName = $producerMainName;
-        $this->price = $price;*/
+
     }
     public function getProducerFirstName(): string
     {
@@ -140,8 +186,15 @@ class CDProduct extends ShopProduct
 
  }
 
-$avtor = new CDProduct("Книга", "Михайл", "Булгаков", 5.00, 10);
+//$avtor = new CDProduct("Книга", "Михайл", "Булгаков", 5.00, 10);
 //print $avtor->getProducer();
  //$avtor->setDiscount(2);
  //$avtor->getTitle();
-print $avtor->getSummaryLine();
+//print $avtor->getSummaryLine();
+
+ $dsn = "sqlite:db/db.sqlite3";
+
+ $pdo = new \PDO($dsn, null, null);
+
+ $pdo->setAttribute(\PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+ $obj = ShopProduct::getInstance(3, $pdo);
